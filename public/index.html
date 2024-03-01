@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healthcare Website</title>
+</head>
+<body>
+    <h1>Insert Patient Data</h1>
+    <form id="patientForm" action="/patients" method="POST">
+        <label for="patientName">Name:</label>
+        <input type="text" id="patientName" name="name"><br><br>
+        <label for="patientAge">Age:</label>
+        <input type="number" id="patientAge" name="age"><br><br>
+        <label for="patientGender">Gender:</label>
+        <select id="patientGender" name="gender">
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+        </select><br><br>
+        <button type="submit">Submit</button>
+    </form>
+
+    <h1>Insert Medicine Data</h1>
+    <form id="medicineForm" action="/medicines" method="POST">
+        <label for="medicineName">Name:</label>
+        <input type="text" id="medicineName" name="name"><br><br>
+        <label for="medicineQuantity">Quantity:</label>
+        <input type="number" id="medicineQuantity" name="quantity"><br><br>
+        <label for="medicineDescription">Description:</label>
+        <textarea id="medicineDescription" name="description"></textarea><br><br>
+        <label for="medicinePrice">Price:</label>
+        <input type="number" id="medicinePrice" name="price"><br><br>
+        <label for="medicineCompany">Company:</label>
+        <input type="text" id="medicineCompany" name="company"><br><br>
+        <button type="submit">Submit</button>
+    </form>
+</body>
+</html>
