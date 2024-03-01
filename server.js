@@ -18,6 +18,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Routes
 app.use('/', require('./routes/index'));
+app.use('/medicines', require('./routes/medicines')); 
 
 // Start the server
 app.listen(PORT, () => {

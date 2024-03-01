@@ -18,5 +18,52 @@
         <input type="email" id="email" name="email" required><br><br>
         <button type="submit">Register</button>
     </form>
+    <!-- Add Medicine Form -->
+    <form id="medicineForm" action="/medicines" method="POST"> 
+        <label for="ID">ID:</label>
+        <input type="text" id="ID" name="ID" required><br><br>
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required><br><br>
+        <label for="quantity">Quantity:</label>
+        <input type="number" id="quantity" name="quantity" required><br><br>
+        <label for="description">Description:</label>
+        <input type="text" id="description" name="description"><br><br>
+        <label for="price">Price:</label>
+        <input type="number" id="price" name="price" required><br><br>
+        <label for="company">Company:</label>
+        <input type="text" id="company" name="company" required><br><br>
+        <button type="submit">Add Medicine</button>
+    
+    </form>
+    <script>
+        document.getElementById('medicineForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent default form submission
+    
+            // Construct JSON object with form data
+            const formData = {
+                ID: document.getElementById('ID').value,
+                name: document.getElementById('name').value,
+                quantity: document.getElementById('quantity').value,
+                description: document.getElementById('description').value,
+                price: document.getElementById('price').value,
+                company: document.getElementById('company').value
+            };
+    
+            // Send JSON data using fetch API
+            fetch('/medicines', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json' // Set content type to JSON
+                },
+                body: JSON.stringify(formData) // Convert JSON object to string
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert('Medicine added successfully');
+                location.reload(); // Refresh page after adding medicine
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    </script>
 </body>
 </html>

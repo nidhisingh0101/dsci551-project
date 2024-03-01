@@ -1,7 +1,7 @@
-// routes/index.js
+// routes/medicines.js
 const express = require('express');
 const router = express.Router();
-const Patient = require('../models/Patient');
+const Medicine = require('../models/Maedicine');
 
 // Homepage route
 router.get('/', (req, res) => {
@@ -9,14 +9,14 @@ router.get('/', (req, res) => {
 });
 
 // Patient registration route
-router.post('/patients', async (req, res) => {
+router.post('/', async (req, res) => {
     try {
         const { name, email } = req.body;
-        const patient = new Patient({ name, email });
-        await patient.save();
-        res.send('Patient registered successfully');
+        const medicine = new Medicine({ name, email });
+        await medicine.save();
+        res.send('successfully');
     } catch (err) {
-        res.status(400).send('Error registering patient');
+        res.status(400).send('Error');
     }
 });
 
