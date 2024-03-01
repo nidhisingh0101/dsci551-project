@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healthcare Website</title>
+</head>
+<body>
+    <h1>Insert Patient Data</h1>
+    <form id="patientForm">
+        <label for="patientName">Name:</label>
+        <input type="text" id="patientName" name="name"><br><br>
+        <label for="patientAge">Age:</label>
+        <input type="number" id="patientAge" name="age"><br><br>
+        <label for="patientGender">Gender:</label>
+        <select id="patientGender" name="gender">
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+        </select><br><br>
+        <button type="button" onclick="submitPatient()">Submit</button>
+    </form>
+
+    <h1>Insert Medicine Data</h1>
+    <form id="medicineForm">
+        <label for="medicineName">Name:</label>
+        <input type="text" id="medicineName" name="name"><br><br>
+        <label for="medicineQuantity">Quantity:</label>
+        <input type="number" id="medicineQuantity" name="quantity"><br><br>
+        <label for="medicineDescription">Description:</label>
+        <textarea id="medicineDescription" name="description"></textarea><br><br>
+        <label for="medicinePrice">Price:</label>
+        <input type="number" id="medicinePrice" name="price"><br><br>
+        <label for="medicineCompany">Company:</label>
+        <input type="text" id="medicineCompany" name="company"><br><br>
+        <button type="button" onclick="submitMedicine()">Submit</button>
+    </form>
+
+    <script>
+        async function submitPatient() {
+            const formData = new FormData(document.getElementById('patientForm'));
+            const patientData = {
+                name: formData.get('name'),
+                age: formData.get('age'),
+                gender: formData.get('gender')
+            };
+            const response = await fetch('/patients', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(patientData)
+            });
+            if (response.ok) {
+                alert('Patient data inserted successfully!');
+            } else {
+                const errorData = await response.json();
+                alert(`Error: ${errorData.error}`);
+            }
+        }
+
+        async function submitMedicine() {
+            const formData = new FormData(document.getElementById('medicineForm'));
+            const medicineData = {
+                name: formData.get('name'),
+                quantity: formData.get('quantity'),
+                description: formData.get('description'),
+                price: formData.get('price'),
+                company: formData.get('company')
+            };
+            const response = await fetch('/medicines', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(medicineData)
+            });
+            if (response.ok) {
+                alert('Medicine data inserted successfully!');
+            } else {
+                const errorData = await response.json();
+                alert(`Error: ${errorData.error}`);
+            }
+        }
+    </script>
+</body>
+</html>
