@@ -1,6 +1,7 @@
-const mongoose = require('mongoose');
+import mongoose from "mongoose"
 
-const medicineSchema = new mongoose.Schema({
+
+export const medicineSchema = new mongoose.Schema({
     name: String,
     quantity: Number,
     description: String,
@@ -9,4 +10,4 @@ const medicineSchema = new mongoose.Schema({
     // Add more fields as needed
 });
 
-module.exports = mongoose.model('Medicine', medicineSchema);
+

@@ -1,48 +1,34 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const mongoose = require('mongoose');
+import express from "express"
+import bodyParser from 'body-parser';
+import { createConnectionAndModels } from "./config/database.js";
+import { customHash } from "./utils.js";
 
 const app = express();
 const port = 7000;
 
 // MongoDB connection
-mongoose.connect('mongodb://localhost:27017/healthcare', { useNewUrlParser: true, useUnifiedTopology: true });
-const db = mongoose.connection;
-db.on('error', console.error.bind(console, 'MongoDB connection error:'));
-
-// Define schemas
-const PatientSchema = new mongoose.Schema({
-    name: String,
-    age: Number,
-    gender: String
-});
-
-const MedicineSchema = new mongoose.Schema({
-    name: String,
-    quantity: Number,
-    description: String,
-    price: Number,
-    company: String
-});
-
-// Define models
-const Patient = mongoose.model('Patient', PatientSchema);
-const Medicine = mongoose.model('Medicine', MedicineSchema);
+const { PatientModels, MedicineModels } = createConnectionAndModels()
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 // Serve static files (HTML, CSS, JS)
-app.use(express.static('public'));
+// app.use(express.static('public'));
 
 // Routes
+
+app.get('/', (req, res) => res.send({message: "Full Sex"}))
+
 app.post('/patients', async (req, res) => {
     try {
         // Extract patient data from the request body
         const { name, age, gender } = req.body;
+        const str = JSON.stringify(req.body)
+        const dbIndex = customHash({ string: str, max: PatientModels.length })
+        console.log(dbIndex)
 
         // Create a new Patient document
-        const patient = new Patient({
+        const patient = new PatientModels[dbIndex]({
             name,
             age,
             gender
@@ -64,8 +50,11 @@ app.post('/medicines', async (req, res) => {
         // Extract medicine data from the request body
         const { name, quantity, description, price, company } = req.body;
 
+        const str = JSON.stringify(req.body)
+        const dbIndex = customHash({ string: str, max: MedicineModels.length })
+
         // Create a new Medicine document
-        const medicine = new Medicine({
+        const medicine = new MedicineModels[dbIndex]({
             name,
             quantity,
             description,
