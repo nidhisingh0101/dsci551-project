@@ -2,7 +2,7 @@ import mongoose from "mongoose"
 import { patientSchema } from "../models/Patient.js"
 import { medicineSchema } from "../models/Medicine.js"
 
-const DATABASES = ["mongodb://localhost:27017/db1","mongodb://localhost:27018/db2"]
+const DATABASES = ["mongodb://localhost:27017/db1","mongodb://localhost:27017/db2"]
 
 export const createConnectionAndModels = () => {
 
