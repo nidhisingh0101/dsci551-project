@@ -1,7 +1,7 @@
 import express from "express"
 import bodyParser from 'body-parser';
 import { createConnectionAndModels } from "./config/database.js";
-import { customHash } from "./utils.js";
+import { customHash } from "./utils/hash.js";
 import PatientRouter from './routes/patients.js'
 import MedicineRouter from './routes/medicines.js'
 
