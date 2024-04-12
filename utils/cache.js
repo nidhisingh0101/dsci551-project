@@ -15,6 +15,10 @@ export class LRUCache {
         }
         return false;
     }
+
+    delete(key) {
+        this.cache.delete(key)
+    }
   
     put(key, value) {
         console.log(this.cache)

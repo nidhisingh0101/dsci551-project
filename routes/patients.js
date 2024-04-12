@@ -47,5 +47,38 @@ router.get('/get', cacheMiddleware('Patient','name',cache) ,async (req,res) => {
 
 })
 
+router.put('/update', async (req,res) => {
+    const { name, age, gender } = req.body;
+    const key = `Patient:${name}`
+    const dbIndex = customHash({ string: key, max: PatientModels.length })
+
+    let toBeUpdated = {}
+    if(age) toBeUpdated['age'] = age
+    if(gender) toBeUpdated['gender'] = gender
+
+    PatientModels[dbIndex].findOne({name: name})
+    .then(data => {
+        PatientModels[dbIndex].updateOne({name:name},{$set:{ ...toBeUpdated }})
+        .then(() => {
+            const updated = {...data._doc,...toBeUpdated}
+            cache.put(key,updated)
+            res.status(200).json(updated)
+        })
+    })    
+    .catch(error => res.status(400).json(error))
+})
+
+router.delete('/remove', async (req, res) => {
+    const { name } = req.body
+    const key = `Patient:${name}`
+    const dbIndex = customHash({ string: key, max: PatientModels.length })
+
+    PatientModels[dbIndex].deleteOne({name:name})
+    .then(()=> {
+        res.status(200).json({'Message':'Deleted'})
+        cache.delete(key)
+    })
+    .catch((error)=> res.status(400).json(error))
+})
 
 export default router;
