@@ -1,20 +1,51 @@
 import mongoose from "mongoose"
-import { patientSchema } from "../models/Patient.js"
-import { medicineSchema } from "../models/Medicine.js"
+import { medicineSchema } from "../models/Medicine.js";
+import { patientSchema } from "../models/Patient.js";
 
-const DATABASES = ["mongodb://localhost:27017/db1","mongodb://localhost:27017/db2"]
+const DATABASES = [{
+        name: 'db1',
+        primary: 'mongodb://localhost:27014/db1',
+        secondary: 'mongodb://localhost:27018/db1Secondary'
+    },
+    {
+        name:'db2',
+        primary: 'mongodb://localhost:27014/db2',
+        secondary: 'mongodb://localhost:27018/db2Secondary'
+    }
+]
+
+let connections = [];
+
+let PatientModels;
+let MedicineModels
 
 export const createConnectionAndModels = () => {
 
-    const connections = DATABASES.map( URL => mongoose.createConnection(URL).once('connected', () => console.log(`${URL} Connected`)).on('error', console.error.bind(console, `${URL} connection error:`)))
+    connections = DATABASES.map(db => {
+        return {
+            primary: mongoose.createConnection(db.primary).once('connected', () => console.log(`${db.primary} Connected`)),
+            secondary: mongoose.createConnection(db.secondary).once('connected', () => console.log(`${db.secondary} Connected`)),
+        }
+    })
 
-    const PatientModels = connections.map( db => db.model('Patient',patientSchema) )
+    MedicineModels = connections.map(db => {
+        return {
+            primary: db.primary.model('Medicine',medicineSchema),
+            secondary: db.secondary.model('Medicine',medicineSchema)
+        }
+    })
 
-    const MedicineModels = connections.map( db => db.model('Medicine',medicineSchema) )
+    PatientModels = connections.map(db => {
+        return {
+            primary: db.primary.model('Patient',patientSchema),
+            secondary: db.secondary.model('Patient',patientSchema)
+        }
+    })
 
-    return {
-       PatientModels, MedicineModels
-    }
+    return { MedicineModels, PatientModels }
 
 }
+
+
+
 
