@@ -9,7 +9,7 @@ const app = express();
 const port = 7000;
 
 // MongoDB connection
-export const { PatientModels, MedicineModels } = createConnectionAndModels()
+export const { PatientModels, MedicineModels } = await createConnectionAndModels()
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());

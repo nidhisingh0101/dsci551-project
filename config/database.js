@@ -4,41 +4,68 @@ import { patientSchema } from "../models/Patient.js";
 
 const DATABASES = [{
         name: 'db1',
-        primary: 'mongodb://localhost:27017/db1',
+        primary: 'mongodb://localhost:27016/db1',
         secondary: 'mongodb://localhost:27018/db1Secondary'
     },
     {
         name:'db2',
-        primary: 'mongodb://localhost:27017/db2',
+        primary: 'mongodb://localhost:27016/db2',
         secondary: 'mongodb://localhost:27018/db2Secondary'
     }
 ]
 
-let connections = [];
 
-let PatientModels;
-let MedicineModels
+export const createConnectionAndModels = async () => {
 
-export const createConnectionAndModels = () => {
-
-    connections = DATABASES.map(db => {
+    let connections = [];
+    try {
+        const connectionPromises = DATABASES.map(async (db) => {
+        let primary;
+        let secondary;
+        try {
+            primary = await mongoose.createConnection(db.primary).asPromise();
+            
+        } catch (error) {
+            // Log or handle the error for the specific database connection
+            console.error(`Error connecting to database: ${error.message}`);
+            primary = null
+        }
+        try {
+            secondary = await mongoose.createConnection(db.secondary).asPromise();
+            
+        } catch (error) {
+            // Log or handle the error for the specific database connection
+            console.error(`Error connecting to database: ${error.message}`);
+            secondary = null
+        }
         return {
-            primary: mongoose.createConnection(db.primary).once('connected', () => console.log(`${db.primary} Connected`)),
-            secondary: mongoose.createConnection(db.secondary).once('connected', () => console.log(`${db.secondary} Connected`)),
+            primary,secondary
+        }
+    });
+
+        const results = await Promise.allSettled(connectionPromises);
+        connections = results
+        .filter(result => result.status === 'fulfilled') // Filter out successful connections
+        .map(result => result.value); // Extract the connection objects from the results
+
+    } 
+    catch (error) {
+        console.error(`Error connecting to databases: ${error.message}`);
+    }
+
+    console.log(connections);
+
+    const MedicineModels = connections.map(db => {
+        return {
+            primary: db.primary?.model('Medicine',medicineSchema),
+            secondary: db.secondary?.model('Medicine',medicineSchema)
         }
     })
 
-    MedicineModels = connections.map(db => {
+    const PatientModels = connections.map(db => {
         return {
-            primary: db.primary.model('Medicine',medicineSchema),
-            secondary: db.secondary.model('Medicine',medicineSchema)
-        }
-    })
-
-    PatientModels = connections.map(db => {
-        return {
-            primary: db.primary.model('Patient',patientSchema),
-            secondary: db.secondary.model('Patient',patientSchema)
+            primary: db.primary?.model('Patient',patientSchema),
+            secondary: db.secondary?.model('Patient',patientSchema)
         }
     })
 
