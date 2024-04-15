@@ -1,11 +1,25 @@
 import express from "express"
-import { PatientModels } from "../server.js";
 import { customHash } from "../utils/hash.js";
 import { LRUCache } from "../utils/cache.js";
 import { cacheMiddleware } from "../middleware/cache.js";
+import { PatientModels } from "../server.js";
 
 const router = express.Router();
 const cache = new LRUCache(15);
+
+setInterval(()=>{
+    PatientModels.forEach(db => {
+        db.primary.find({})
+        .then(data => {
+            data.forEach(async (doc) => {
+                db.secondary.updateOne({ _id: doc._id }, doc, { upsert: true })
+                .then(res => console.log('Synchronized'))
+                .catch(error => console.log('Failed to synchronize'))
+            
+            });
+        })
+    })
+},180000)
 
 // POST route to add a new Patient
 router.post('/add', cacheMiddleware('Patient','name',cache) ,async (req, res) => {
@@ -16,7 +30,7 @@ router.post('/add', cacheMiddleware('Patient','name',cache) ,async (req, res) =>
     
     console.log(dbIndex)
     // Create a new Patient document
-    const patient = new PatientModels[dbIndex]({
+    const patient = new PatientModels[dbIndex].primary({
         name,
         age,
         gender
@@ -38,12 +52,25 @@ router.get('/get', cacheMiddleware('Patient','name',cache) ,async (req,res) => {
     const dbIndex = customHash({ string: key, max: PatientModels.length })
     console.log(dbIndex)
 
-    PatientModels[dbIndex].findOne({name: name})
+    PatientModels[dbIndex].primary.findOne({name: name})
     .then(data => {
         cache.put(key,data)
         res.status(200).json(data)
     })
-    .catch(error => res.status(400).json(error))
+    .catch(primaryError => {
+        console.error('Failed to fetch data from primary database:', primaryError);
+        console.log('Attempting to fetch data from secondary database...');
+
+        PatientModels[dbIndex].secondary.findOne({ name: name })
+            .then(data => {
+                cache.put(key, data);
+                res.status(200).json(data);
+            })
+            .catch(secondaryError => {
+                console.error('Failed to fetch data from secondary database:', secondaryError);
+                res.status(400).json({ error: 'Failed to fetch data from primary and secondary databases' });
+            });
+    });
 
 })
 
@@ -56,9 +83,9 @@ router.put('/update', async (req,res) => {
     if(age) toBeUpdated['age'] = age
     if(gender) toBeUpdated['gender'] = gender
 
-    PatientModels[dbIndex].findOne({name: name})
+    PatientModels[dbIndex].primary.findOne({name: name})
     .then(data => {
-        PatientModels[dbIndex].updateOne({name:name},{$set:{ ...toBeUpdated }})
+        PatientModels[dbIndex].primary.updateOne({name:name},{$set:{ ...toBeUpdated }})
         .then(() => {
             const updated = {...data._doc,...toBeUpdated}
             cache.put(key,updated)
@@ -73,7 +100,7 @@ router.delete('/remove', async (req, res) => {
     const key = `Patient:${name}`
     const dbIndex = customHash({ string: key, max: PatientModels.length })
 
-    PatientModels[dbIndex].deleteOne({name:name})
+    PatientModels[dbIndex].primary.deleteOne({name:name})
     .then(()=> {
         res.status(200).json({'Message':'Deleted'})
         cache.delete(key)
