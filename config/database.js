@@ -4,12 +4,12 @@ import { patientSchema } from "../models/Patient.js";
 
 const DATABASES = [{
         name: 'db1',
-        primary: 'mongodb://localhost:27016/db1',
+        primary: 'mongodb://localhost:27017/db1',
         secondary: 'mongodb://localhost:27018/db1Secondary'
     },
     {
         name:'db2',
-        primary: 'mongodb://localhost:27016/db2',
+        primary: 'mongodb://localhost:27017/db2',
         secondary: 'mongodb://localhost:27018/db2Secondary'
     }
 ]

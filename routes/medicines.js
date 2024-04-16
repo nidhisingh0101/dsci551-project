@@ -12,27 +12,28 @@ let intervalID;
 const syncDatabases = () => {
     MedicineModels.forEach( async (db) => {
 
-        if(!(db.primary) || !(db.secondary)){
+        if(db.primary && db.secondary){
+        
+            const primaryData = await db.primary.find({}).exec()
+            const secondaryData = await db.secondary.find({}).exec()
+
+            primaryData.forEach(async (doc) => {
+                db.secondary.updateOne({ _id: doc._id }, doc, { upsert: true })
+                    .then(res => console.log('Synchronized'))
+                    .catch(error => console.log('Failed to synchronize'))
+            })
+
+            secondaryData.forEach(async (doc) => {
+                db.primary.updateOne({ _id: doc._id }, doc, { upsert: true })
+                    .then(res => console.log('Synchronized'))
+                    .catch(error => console.log('Failed to synchronize'))
+            })
+        }
+        else{
             clearInterval(intervalID)
             console.log('One or more Databases are not online')
             return;
         }
-
-        const primaryData = await db.primary.find({}).exec()
-        const secondaryData = await db.secondary.find({}).exec()
-
-        primaryData.forEach(async (doc) => {
-            db.secondary.updateOne({ _id: doc._id }, doc, { upsert: true })
-                .then(res => console.log('Synchronized'))
-                .catch(error => console.log('Failed to synchronize'))
-        })
-
-        secondaryData.forEach(async (doc) => {
-            db.primary.updateOne({ _id: doc._id }, doc, { upsert: true })
-                .then(res => console.log('Synchronized'))
-                .catch(error => console.log('Failed to synchronize'))
-        })
-
     })
 }
 
@@ -55,7 +56,8 @@ router.post('/add', cacheMiddleware('Medicine','name',cache) ,async (req, res) =
             quantity,
             description,
             price,
-            company
+            company,
+            image_URL
         })
 
         medicine.save()
@@ -71,7 +73,8 @@ router.post('/add', cacheMiddleware('Medicine','name',cache) ,async (req, res) =
             quantity,
             description,
             price,
-            company
+            company,
+            image_URL
         })
 
         medicine.save()
@@ -122,9 +125,34 @@ router.get('/get', cacheMiddleware('Medicine', 'name', cache), async (req, res) 
     }
 });
 
+router.get('/getAll', async (req, res) => {
+
+    let response = []
+    
+    for (const db of MedicineModels) {
+        let data;
+        if (db.primary) {
+            data = await db.primary.find({});
+        } else if (db.secondary) {
+            data = await db.secondary.find({});
+        }
+        console.log(data);
+        if (data && data.length > 0) {
+            response = response.concat(data);
+        }
+    }
+
+    if (response.length > 0) {
+        res.status(200).json(response);
+    } else {
+        res.status(404).json({ message: "No data found" });
+    }
+});
+
+
 
 router.put('/update', async (req,res) => {
-    const { name, quantity, description, price, company } = req.body;
+    const { name, quantity, description, price, company,image_URL } = req.body;
     const key = `Medicine:${name}`
     const dbIndex = customHash({ string: key, max: MedicineModels.length })
 
@@ -133,13 +161,14 @@ router.put('/update', async (req,res) => {
     if(description) toBeUpdated['description'] = description
     if(price) toBeUpdated['price'] = price
     if(company) toBeUpdated['company'] = company
+    if(image_URL) toBeUpdated['image_URL'] = image_URL
 
     if((MedicineModels[dbIndex].primary)){
         MedicineModels[dbIndex].primary.findOne({name: name})
         .then(data => {
             MedicineModels[dbIndex].primary.updateOne({name:name},{$set:{ ...toBeUpdated }})
             .then(() => {
-                const updated = {...data._doc,...toBeUpdated}
+                const updated = {...data?._doc,...toBeUpdated}
                 cache.put(key,updated)
                 res.status(200).json(updated)
             })

@@ -4,6 +4,7 @@ import { createConnectionAndModels } from "./config/database.js";
 import { customHash } from "./utils/hash.js";
 import PatientRouter from './routes/patients.js'
 import MedicineRouter from './routes/medicines.js'
+import cors from 'cors'
 
 const app = express();
 const port = 7000;
@@ -13,7 +14,7 @@ export const { PatientModels, MedicineModels } = await createConnectionAndModels
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-
+app.use(cors())
 app.get('/', (req, res) => res.send({message: "Full Sex"}))
 
 app.use('/patients',PatientRouter);

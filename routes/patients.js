@@ -6,20 +6,38 @@ import { PatientModels } from "../server.js";
 
 const router = express.Router();
 const cache = new LRUCache(15);
+let intervalID
 
-setInterval(()=>{
-    PatientModels.forEach(db => {
-        db.primary.find({})
-        .then(data => {
-            data.forEach(async (doc) => {
+const syncDatabases = () => {
+    PatientModels.forEach( async (db) => {
+
+        if(db.primary && db.secondary){
+        
+            const primaryData = await db.primary.find({}).exec()
+            const secondaryData = await db.secondary.find({}).exec()
+
+            primaryData.forEach(async (doc) => {
                 db.secondary.updateOne({ _id: doc._id }, doc, { upsert: true })
-                .then(res => console.log('Synchronized'))
-                .catch(error => console.log('Failed to synchronize'))
-            
-            });
-        })
+                    .then(res => console.log('Synchronized'))
+                    .catch(error => console.log('Failed to synchronize'))
+            })
+
+            secondaryData.forEach(async (doc) => {
+                db.primary.updateOne({ _id: doc._id }, doc, { upsert: true })
+                    .then(res => console.log('Synchronized'))
+                    .catch(error => console.log('Failed to synchronize'))
+            })
+        }
+        else{
+            clearInterval(intervalID)
+            console.log('One or more Databases are not online')
+            return;
+        }
     })
-},180000)
+}
+
+intervalID = setInterval(syncDatabases,180000)
+
 
 // POST route to add a new Patient
 router.post('/add', cacheMiddleware('Patient','name',cache) ,async (req, res) => {
@@ -73,6 +91,38 @@ router.get('/get', cacheMiddleware('Patient','name',cache) ,async (req,res) => {
     });
 
 })
+
+router.get('/getAll', async (req, res) => {
+
+    let response = []
+    
+    PatientModels.forEach(db => {
+
+        if(db.primary){
+            db.primary.find({})
+            .then(data => {
+                response.push(data)
+            })
+            .catch(secondaryError => {
+                console.error('Failed to fetch data from secondary database:', secondaryError);
+                res.status(400).json({ error: 'Failed to fetch data from primary and secondary databases' });
+            });
+        }
+        else if(db.secondary){
+            db.secondary.find({})
+            .then(data => {
+                response.push(data)
+            })
+            .catch(secondaryError => {
+                console.error('Failed to fetch data from secondary database:', secondaryError);
+                res.status(400).json({ error: 'Failed to fetch data from primary and secondary databases' });
+            });
+        }
+    })
+
+    res.status(200).json(response)
+});
+
 
 router.put('/update', async (req,res) => {
     const { name, age, gender } = req.body;
