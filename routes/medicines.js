@@ -42,7 +42,7 @@ intervalID = setInterval(syncDatabases,60000)
 // POST route to add a new medicine
 router.post('/add', cacheMiddleware('Medicine','name',cache) ,async (req, res) => {
     // Extract medicine data from the request body
-    const { name, quantity, description, price, company } = req.body;
+    const { name, quantity, description, price, company, imageURL } = req.body;
 
     const key = `Medicine:${name}`
     const dbIndex = customHash({ string: key, max: MedicineModels.length })
@@ -56,7 +56,7 @@ router.post('/add', cacheMiddleware('Medicine','name',cache) ,async (req, res) =
             description,
             price,
             company,
-            image_URL
+            imageURL
         })
 
         medicine.save()
@@ -73,7 +73,7 @@ router.post('/add', cacheMiddleware('Medicine','name',cache) ,async (req, res) =
             description,
             price,
             company,
-            image_URL
+            imageURL
         })
 
         medicine.save()
@@ -149,7 +149,7 @@ router.get('/getAll', async (req, res) => {
 
 
 router.put('/update', async (req,res) => {
-    const { name, quantity, description, price, company,image_URL } = req.body;
+    const { name, quantity, description, price, company,imageURL } = req.body;
     const key = `Medicine:${name}`
     const dbIndex = customHash({ string: key, max: MedicineModels.length })
 
@@ -158,13 +158,14 @@ router.put('/update', async (req,res) => {
     if(description) toBeUpdated['description'] = description
     if(price) toBeUpdated['price'] = price
     if(company) toBeUpdated['company'] = company
-    if(image_URL) toBeUpdated['image_URL'] = image_URL
+    if(imageURL) toBeUpdated['imageURL'] = imageURL
 
     if((MedicineModels[dbIndex].primary)){
         MedicineModels[dbIndex].primary.findOne({name: name})
         .then(data => {
             MedicineModels[dbIndex].primary.updateOne({name:name},{$set:{ ...toBeUpdated }})
-            .then(() => {
+            .then((data) => {
+                console.log(data)
                 const updated = {...data?._doc,...toBeUpdated}
                 cache.put(key,updated)
                 res.status(200).json(updated)
@@ -191,27 +192,25 @@ router.put('/update', async (req,res) => {
 
 router.delete('/remove', async (req, res) => {
     const { name } = req.body
+    console.log(name)
     const key = `Medicine:${name}`
     const dbIndex = customHash({ string: key, max: MedicineModels.length })
+    console.log(dbIndex)
 
     if((MedicineModels[dbIndex].primary)){
         MedicineModels[dbIndex].primary.deleteOne({name:name})
-        .then(()=> {
-            res.status(200).json({'Message':'Deleted'})
-            cache.delete(key)
+        .then((data)=> {
+            console.log(data)
+            MedicineModels[dbIndex].secondary.deleteOne({name:name})
+            .then((data)=> {
+                console.log(data)
+                console.log('Deleted')
+                res.status(200).json({'Message':'Deleted'})
+                cache.delete(key)
+            })
+            .catch((error)=> res.status(400).json(error))
         })
         .catch((error)=> res.status(400).json(error))
-    }
-    else if((MedicineModels[dbIndex].secondary)){
-        MedicineModels[dbIndex].secondary.deleteOne({name:name})
-        .then(()=> {
-            res.status(200).json({'Message':'Deleted'})
-            cache.delete(key)
-        })
-        .catch((error)=> res.status(400).json(error))
-    }
-    else{
-        res.status(400).send('Server down')
     }
 
     

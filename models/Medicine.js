@@ -7,7 +7,7 @@ export const medicineSchema = new mongoose.Schema({
     description: String,
     price: Number,
     company: String,
-    image_URL: String,
+    imageURL: String,
 });
 
 
