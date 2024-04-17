@@ -37,7 +37,7 @@ const syncDatabases = () => {
     })
 }
 
-intervalID = setInterval(syncDatabases,180000)
+intervalID = setInterval(syncDatabases,60000)
 
 // POST route to add a new medicine
 router.post('/add', cacheMiddleware('Medicine','name',cache) ,async (req, res) => {
@@ -46,7 +46,6 @@ router.post('/add', cacheMiddleware('Medicine','name',cache) ,async (req, res) =
 
     const key = `Medicine:${name}`
     const dbIndex = customHash({ string: key, max: MedicineModels.length })
-    console.log(dbIndex)
     // Create a new Medicine document
     
 
@@ -93,10 +92,8 @@ router.post('/add', cacheMiddleware('Medicine','name',cache) ,async (req, res) =
 
 router.get('/get', cacheMiddleware('Medicine', 'name', cache), async (req, res) => {
     const { name } = req.body;
-    console.log(name);
     const key = `Medicine:${name}`;
     const dbIndex = customHash({ string: key, max: MedicineModels.length });
-    console.log(dbIndex);
 
     if((MedicineModels[dbIndex].primary)){
         MedicineModels[dbIndex].primary.findOne({ name: name })

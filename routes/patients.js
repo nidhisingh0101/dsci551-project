@@ -36,7 +36,7 @@ const syncDatabases = () => {
     })
 }
 
-intervalID = setInterval(syncDatabases,180000)
+intervalID = setInterval(syncDatabases,60000)
 
 
 // POST route to add a new Patient
@@ -95,32 +95,23 @@ router.get('/get', cacheMiddleware('Patient','name',cache) ,async (req,res) => {
 router.get('/getAll', async (req, res) => {
 
     let response = []
-    
-    PatientModels.forEach(db => {
-
-        if(db.primary){
-            db.primary.find({})
-            .then(data => {
-                response.push(data)
-            })
-            .catch(secondaryError => {
-                console.error('Failed to fetch data from secondary database:', secondaryError);
-                res.status(400).json({ error: 'Failed to fetch data from primary and secondary databases' });
-            });
+    for (const db of PatientModels) {
+        let data;
+        if (db.primary) {
+            data = await db.primary.find({});
+        } else if (db.secondary) {
+            data = await db.secondary.find({});
         }
-        else if(db.secondary){
-            db.secondary.find({})
-            .then(data => {
-                response.push(data)
-            })
-            .catch(secondaryError => {
-                console.error('Failed to fetch data from secondary database:', secondaryError);
-                res.status(400).json({ error: 'Failed to fetch data from primary and secondary databases' });
-            });
+        if (data && data.length > 0) {
+            response = response.concat(data);
         }
-    })
+    }
 
-    res.status(200).json(response)
+    if (response.length > 0) {
+        res.status(200).json(response);
+    } else {
+        res.status(404).json({ message: "No data found" });
+    }
 });
 
 

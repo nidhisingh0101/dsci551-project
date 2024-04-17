@@ -1,6 +1,7 @@
 import mongoose from "mongoose"
 import { medicineSchema } from "../models/Medicine.js";
 import { patientSchema } from "../models/Patient.js";
+import UserSchema from "../models/User.js";
 
 const DATABASES = [{
         name: 'db1',
@@ -61,6 +62,8 @@ export const createConnectionAndModels = async () => {
             secondary: db.secondary?.model('Medicine',medicineSchema)
         }
     })
+
+
 
     const PatientModels = connections.map(db => {
         return {
