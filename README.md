@@ -1,5 +1,10 @@
 # dsci551-project
 
+## Download the following repositories too
+
+- [admin](https://github.com/i-supermario/551-admin-dashboard)
+- [ecommerce](https://github.com/i-supermario/551-ecommerce)
+
 ## Project Setup
 
 ### Server Setup
